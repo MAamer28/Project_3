@@ -71,7 +71,8 @@ def listyears():
             print(row)
             data.append(
                row[0])
-        print(len(data))  
+    with open('flask_api/yearsAPI.json','w') as f:
+        json.dump(data, f, indent=4)  
     return jsonify(list(set(data)))
     # return jsonify([2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023])
 
@@ -86,12 +87,14 @@ def listDistricts():
     with open('Data/districts.csv', 'r') as f:
         reader = csv.reader(f)
         next(reader)
-        data =  {"data":[]}
+        data =  []
         for row in reader:
             print(row)
-            data['data'].append(
+            data.append(
                {"id": row[0], "name": row[1]})
-        print(len(data))  
+        print(len(data))
+    with open('flask_api/districtsAPI.json','w') as f:
+        json.dump(data, f, indent=4)  
     return jsonify(data)
 
 
@@ -106,12 +109,13 @@ def listDivisions():
     with open('Data/divisions.csv', 'r') as f:
         reader = csv.reader(f)
         next(reader)
-        data =  {"data": []}
+        data = []
         for row in reader:
             print(row)
-            data['data'].append(
+            data.append(
                {"id": row[0], "name": row[1]})
-        print(len(data))  
+    with open('flask_api/divisionsAPI.json','w') as f:
+        json.dump(data, f, indent=4)  
     return jsonify(data)
 
 
@@ -127,14 +131,9 @@ def listAllData():
     with open('Data/KSI_final.csv', 'r') as f:
         reader = csv.reader(f)
         next(reader)
-        data =  {"data":[]}
+        data = []
         for row in reader:
-
-            # YEAR,DATE,TIME,STREET1,ROAD_CLASS,LATITUDE,LONGITUDE,LOCCOORD,ACCLOC,TRAFFCTL,VISIBILITY,LIGHT,RDSFCOND,ACCLASS,IMPACTYPE,INVTYPE,INVAGE,INJURY,PEDESTRIAN,CYCLIST,AUTOMOBILE,MOTORCYCLE,TRUCK,PASSENGER,SPEEDING,REDLIGHT,ALCOHOL,DISABILITY,Record_ID,division_id,district_id
-            if((len(data['data']))> 10):
-
-                break;
-            data['data'].append(
+            data.append(
                {"year": int(row[0]), "date": row[1],"time": row[2],
                 "street1": row[3],"road_class": row[4], "latitude": float(row[5]), "longitude": float(row[6]), "loccoord": row[7],
                  "accloc": row[8], "traffctl": row[9], "visibility": row[10], "light": row[11],
@@ -144,7 +143,8 @@ def listAllData():
                   "redlight": bool(row[25]),"alcohol": bool(row[26]),"disability": bool(row[27]),"record_id": int(row[28]),
                   "division_id": row[29],"district_id": row[30]  })
            
-        print(len(data['data']))  
+    with open('flask_api/allDataAPI.json','w') as f:
+        json.dump(data, f, indent=4)  
     return jsonify(data)
 
 if __name__ == '__main__':
