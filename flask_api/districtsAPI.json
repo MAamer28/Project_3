@@ -1,0 +1,18 @@
+[
+    {
+        "id": "district1",
+        "name": "Toronto and East York"
+    },
+    {
+        "id": "district2",
+        "name": "Etobicoke York"
+    },
+    {
+        "id": "district3",
+        "name": "North York"
+    },
+    {
+        "id": "district4",
+        "name": "Scarborough"
+    }
+]
