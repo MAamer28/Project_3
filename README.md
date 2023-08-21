@@ -1,5 +1,5 @@
 # Project 3: Traffic Accidents in Toronto
-by Mohamed Aamer, Lena Hammoud, Prachi Patel, 
+by Mohamed Aamer, Lena Hammoud, Prachi Patel, Shelly Sakkerwal
 
 ## Abstract
 This research project will conduct a data analysis on traffic accident cases in Toronto resulting in a person Killed or Seriously Injured (KSI) from 2017 to 2022. The dataset is taken from Toronto Police Services' Public Safety Data Portal at (https://data.torontopolice.on.ca/datasets/TorontoPS::ksi/explore). 
