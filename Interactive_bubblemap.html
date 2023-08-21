@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Toronto Choropleth Map by Division</title>
+    <!-- Include Leaflet CSS and JavaScript libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Include D3.js library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Add CSS styling here */
+        #map {
+            height: 400px;
+        }
+        #yearDropdown {
+            position: absolute;
+            bottom: 10px; /* Adjust to your preferred position */
+            left: 10px;
+            background-color: white;
+            padding: 5px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Toronto Choropleth Map by Division</h1>
+
+    <!-- Create a div for the map -->
+    <div id="map"></div>
+
+    <!-- Create a dropdown for selecting the year -->
+    <div id="yearDropdown">
+        <label for="yearSelect">Select Year:</label>
+        <select id="yearSelect"></select>
+    </div>
+
+    <script>
+        // Initialize the Leaflet map
+        var map = L.map('map').setView([43.70, -79.40], 11); // Set the initial map center and zoom level
+
+        // Load GeoJSON or TopoJSON data for Toronto divisions
+        // Replace "yourdivisiondata.geojson" with the actual path to your division data file
+        d3.json("http://127.0.0.1:8080/Project_3-main/Visualizations/KSI.geojson").then(function(divisionData) {
+            // Load data from CSV file
+            d3.csv("http://127.0.0.1:8080/Project_3-main/Visualizations/KSI_final.csv").then(function(data) {
+                // Create a quantize color scale
+                const color = d3.scaleQuantize([1, d3.max(data, d => +d.RECORD_ID)], d3.schemeBlues[9]);
+
+                // Create a map path generator
+                const path = d3.geoPath();
+
+                // Get unique years from the data
+                var uniqueYears = Array.from(new Set(data.map(d => d.YEAR)));
+
+                // Populate the year dropdown with unique years
+                var yearSelect = document.getElementById("yearSelect");
+                uniqueYears.forEach(function(year) {
+                    var option = document.createElement("option");
+                    option.text = year;
+                    yearSelect.add(option);
+                });
+
+                // Initialize the marker layer
+                var markerLayer = L.layerGroup().addTo(map);
+
+                // Handle year selection change event
+                yearSelect.addEventListener("change", function() {
+                    var selectedYear = parseInt(yearSelect.value);
+                    updateChoropleth(selectedYear);
+                });
+
+                // Function to update the choropleth based on the selected year
+                function updateChoropleth(selectedYear) {
+                    // Clear existing layers except the marker layer
+                    map.eachLayer(function(layer) {
+                        if (layer !== markerLayer) {
+                            map.removeLayer(layer);
+                        }
+                    });
+
+                    // Create a choropleth layer using GeoJSON data for the selected year
+                    var filteredData = data.filter(function(d) {
+                        return d.YEAR === selectedYear;
+                    });
+
+                    L.geoJson(divisionData, {
+                        style: function(feature) {
+                            // Calculate the color based on the "record_id" for each division
+                            var divisionId = feature.properties.DIVISION_ID; // Adjust this to match your data
+                            var divisionDataEntry = filteredData.find(function(d) {
+                                return d.division_id === divisionId; // Adjust this to match your data
+                            });
+                            var colorValue = divisionDataEntry ? +divisionDataEntry.RECORD_ID : 0; // Adjust this to match your data
+
+                            // Set the fill color of the division
+                            return { fillColor: color(colorValue), fillOpacity: 0.7, weight: 1 };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            // Add popup information (optional)
+                            var divisionId = feature.properties.DIVISION_ID; // Adjust this to match your data
+                            var divisionDataEntry = filteredData.find(function(d) {
+                                return d.division_id === divisionId; // Adjust this to match your data
+                            });
+                            var divisionName = feature.properties.DIVISION_NAME; // Adjust this to match your data
+                            var popupContent = divisionName + ": " + (divisionDataEntry ? divisionDataEntry.RECORD_ID : "N/A"); // Adjust this to match your data
+                            layer.bindPopup(popupContent);
+                        }
+                    }).addTo(map);
+
+                    // Add markers (dots) to the marker layer
+                    markerLayer.clearLayers(); // Clear existing markers
+                    filteredData.forEach(function(d) {
+                        var lat = parseFloat(d.LATITUDE);
+                        var lon = parseFloat(d.LONGITUDE);
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            var marker = L.circleMarker([lat, lon], {
+                                radius: 8,
+                                fillColor: "blue", // Change to your preferred blue color
+                                fillOpacity: 0.8
+                            });
+                            marker.addTo(markerLayer);
+                        }
+                    });
+                }
+
+                // Initialize the choropleth with the first year
+                updateChoropleth(uniqueYears[0]);
+            });
+        });
+    </script>
+</body>
+</html>

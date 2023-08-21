@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Toronto Heatmap by Division</title>
+    <!-- Include Leaflet CSS and JavaScript libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Include Leaflet Heat plugin -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Include D3.js library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Add CSS styling here */
+        #map {
+            height: 400px;
+        }
+
+        #gradientLegend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 5px #888;
+            z-index: 1000; /* Ensure it's above the map */
+            display: flex;
+            flex-direction: row; /* Display items horizontally */
+        }
+
+        .legend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 10px; /* Adjust spacing between legend items */
+        }
+
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 5px; /* Adjust spacing between color boxes and labels */
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Toronto Heatmap by Division</h1>
+
+    <!-- Create a div for the map -->
+    <div id="map"></div>
+
+    <!-- Create a div for the gradient legend -->
+    <div id="gradientLegend"></div>
+
+    <!-- Create a dropdown menu for selecting the year -->
+    <label for="yearSelect">Select Year:</label>
+    <select id="yearSelect"></select>
+
+    <script>
+        // Initialize the Leaflet map
+        var map = L.map('map').setView([43.70, -79.40], 11); // Set the initial map center and zoom level
+
+        // Add a tile layer (you can use different map providers)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Load data from CSV file
+        d3.csv("http://127.0.0.1:8080/Project_3-main/Visualizations/KSI_final.csv").then(function(data) {
+            // Create an empty object to store heat data by division
+            var heatDataByDivision = {};
+
+            // Populate the dropdown with unique years
+            var yearSelect = document.getElementById("yearSelect");
+            var uniqueYears = [...new Set(data.map(entry => entry.YEAR))];
+            uniqueYears.forEach(function(year) {
+                var option = document.createElement("option");
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+
+            // Process the data and populate the heat data object
+            data.forEach(function(entry) {
+                var year = entry.YEAR;
+                var division = entry.division_id;
+                var latitude = parseFloat(entry.LATITUDE);
+                var longitude = parseFloat(entry.LONGITUDE);
+
+                if (!isNaN(latitude) && !isNaN(longitude)) {
+                    if (!heatDataByDivision[year]) {
+                        heatDataByDivision[year] = {};
+                    }
+                    if (!heatDataByDivision[year][division]) {
+                        heatDataByDivision[year][division] = [];
+                    }
+                    heatDataByDivision[year][division].push([latitude, longitude]);
+                }
+            });
+
+            // Create a color scale for divisions
+            var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+            // Create a function to update the heatmap based on the selected year
+            function updateHeatmap(selectedYear) {
+                // Clear the map
+                map.eachLayer(function(layer) {
+                    if (layer instanceof L.TileLayer || layer instanceof L.Control) {
+                        return;
+                    }
+                    map.removeLayer(layer);
+                });
+
+                // Create a heatmap layer for each division in the selected year
+                for (var division in heatDataByDivision[selectedYear]) {
+                    var heatLayer = L.heatLayer(heatDataByDivision[selectedYear][division], {
+                        radius: 20,
+                        blur: 15,
+                        gradient: { 0.2: 'blue', 0.4: 'lime', 0.6: 'orange', 1: 'red' },
+                        maxZoom: 13
+                    }).addTo(map);
+
+                    // Create a legend for the division
+                    var legend = L.control({ position: 'topright' });
+
+                    legend.onAdd = function (map) {
+                        var div = L.DomUtil.create('div', 'info legend');
+                        div.innerHTML = '<i style="background:' + colorScale(division) + '"></i> Division ' + division;
+                        return div;
+                    };
+
+                    legend.addTo(map);
+                }
+
+                // Update the heat legend
+                updateHeatLegend();
+            }
+
+            // Function to update the gradient legend based on the selected division
+            function updateHeatLegend() {
+                var gradientLegendDiv = document.getElementById('gradientLegend');
+                var gradientLegendHTML = '<p1>Heat Legend</p1>';
+                gradientLegendHTML += '<div class="legend-item"><div class="color-box" style="background: blue"></div> Low</div>';
+                gradientLegendHTML += '<div class="legend-item"><div class="color-box" style="background: lime"></div> Moderate</div>';
+                gradientLegendHTML += '<div class="legend-item"><div class="color-box" style="background: orange"></div> High</div>';
+                gradientLegendHTML += '<div class="legend-item"><div class="color-box" style="background: red"></div> Very High</div>';
+
+                gradientLegendDiv.innerHTML = gradientLegendHTML;
+            }
+
+            // Initialize the heatmap with the first year in the data
+            updateHeatmap(uniqueYears[0]);
+
+            // Add event listener to the year dropdown to update the heatmap
+            yearSelect.addEventListener("change", function() {
+                var selectedYear = yearSelect.value;
+                updateHeatmap(selectedYear);
+            });
+        });
+    </script>
+</body>
+</html>
