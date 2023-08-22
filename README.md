@@ -12,6 +12,7 @@ By analyzing the data and presenting compelling visuals, the project seeks to de
 - Creating a MongoDB of the data
 - Creating a heat map of KSI cases in Toronto using Leaflet
 - Creating a dashboard of visuals reflecting KSI cases with user input to filter data by year
+- Navigating around Cross-Origin Resource Sharing (CORS) restrictions by connecting to a local dev server and accessing the project in that server
 
 ## Results
 
